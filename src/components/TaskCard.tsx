@@ -21,6 +21,15 @@ function formatDueDate(dueDate: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+function isOverdue(card: Card): boolean {
+  if (!card.dueDate || card.status === 'done') return false
+  const [year, month, day] = card.dueDate.split('-').map(Number)
+  const due = new Date(year, month - 1, day)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return due < today
+}
+
 function initials(name: string): string {
   const trimmed = name.trim()
   if (!trimmed) return '?'
@@ -32,6 +41,8 @@ function initials(name: string): string {
 }
 
 export function TaskCard({ card, onClick, onDragStart, onDragEnd, isDragging }: TaskCardProps) {
+  const overdue = isOverdue(card)
+
   return (
     <div
       role="button"
@@ -57,7 +68,11 @@ export function TaskCard({ card, onClick, onDragStart, onDragEnd, isDragging }: 
           <span className="truncate text-xs text-[#717182]">{card.assignee}</span>
         </div>
         {card.dueDate && (
-          <span className="shrink-0 text-xs text-[#717182]">{formatDueDate(card.dueDate)}</span>
+          <span
+            className={`shrink-0 text-xs ${overdue ? 'font-medium text-[#d4183d]' : 'text-[#717182]'}`}
+          >
+            {formatDueDate(card.dueDate)}
+          </span>
         )}
       </div>
 

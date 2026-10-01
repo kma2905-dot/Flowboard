@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
 import { useState } from 'react'
 import type { Card, ColumnId, Priority } from '../types'
-import { PRIORITIES } from '../types'
+import { COLUMNS, PRIORITIES } from '../types'
 
 interface CardModalProps {
   card: Card | null
@@ -21,12 +21,14 @@ export function CardModal({ card, defaultStatus, onClose, onSave, onDelete }: Ca
   const [assignee, setAssignee] = useState(card?.assignee ?? '')
   const [priority, setPriority] = useState<Priority>(card?.priority ?? 'Medium')
   const [dueDate, setDueDate] = useState(card?.dueDate ?? '')
+  const [status, setStatus] = useState<ColumnId>(card?.status ?? defaultStatus)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const isValid = title.trim().length > 0 && assignee.trim().length > 0 && dueDate.length > 0
 
   const handleSave = () => {
     if (!isValid) return
-    onSave({ title: title.trim(), assignee: assignee.trim(), priority, dueDate, status: card?.status ?? defaultStatus })
+    onSave({ title: title.trim(), assignee: assignee.trim(), priority, dueDate, status })
   }
 
   return (
@@ -78,6 +80,21 @@ export function CardModal({ card, defaultStatus, onClose, onSave, onDelete }: Ca
             />
           </label>
 
+          <label className="flex flex-col gap-2">
+            <span className={labelClass}>Status</span>
+            <select
+              className={inputClass}
+              value={status}
+              onChange={(e) => setStatus(e.target.value as ColumnId)}
+            >
+              {COLUMNS.map((col) => (
+                <option key={col.id} value={col.id}>
+                  {col.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className="flex gap-4">
             <label className="flex flex-1 flex-col gap-2">
               <span className={labelClass}>Priority</span>
@@ -107,13 +124,33 @@ export function CardModal({ card, defaultStatus, onClose, onSave, onDelete }: Ca
 
           <div className="mt-2 flex items-center justify-between border-t border-black/10 pt-4">
             {card ? (
-              <button
-                type="button"
-                onClick={() => onDelete(card.id)}
-                className="text-sm font-medium text-[#d4183d] hover:underline"
-              >
-                Delete card
-              </button>
+              confirmingDelete ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-[#717182]">Delete this card?</span>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(false)}
+                    className="text-sm font-medium text-[#0a0a0a] hover:underline"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(card.id)}
+                    className="text-sm font-medium text-[#d4183d] hover:underline"
+                  >
+                    Confirm delete
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="text-sm font-medium text-[#d4183d] hover:underline"
+                >
+                  Delete card
+                </button>
+              )
             ) : (
               <span />
             )}
